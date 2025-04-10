@@ -1,91 +1,152 @@
 package AdjacencyMatrix;
 
-import java.util.Arrays;
+import java.util.*;
 
 public abstract class Graph {
-    protected int[][] adjMatrix;
-    protected int numVertices;
+    protected int[][] adjMatrix; // Adjacency matrix to represent edges
+    protected int vertexCount; // Current number of vertices
 
     public Graph(int size) {
-        this.numVertices = size;
-        this.adjMatrix = new int[size][size]; // Initialize matrix with correct size
+        adjMatrix = new int[size][size];
+        vertexCount = size;
     }
 
-    // Add a new vertex to the graph
+    public int getNumVertices() {
+        return vertexCount;
+    }
+
+    // Abstract methods to be defined in child classes
+    public abstract void addEdge(int start, int end);
+
+    public abstract void removeEdge(int start, int end);
+
+    // Add a new vertex by expanding the matrix
     public void addVertex() {
-        numVertices++; // Increase vertex count
-        int[][] newMatrix = new int[numVertices][numVertices]; // New adjacency matrix
-
-        // Copy old matrix values into new matrix
-        for (int i = 0; i < numVertices - 1; i++) {
-            System.arraycopy(adjMatrix[i], 0, newMatrix[i], 0, numVertices - 1);
+        vertexCount++;
+        int[][] newMatrix = new int[vertexCount][vertexCount];
+        for (int i = 0; i < vertexCount - 1; i++) {
+            System.arraycopy(adjMatrix[i], 0, newMatrix[i], 0, vertexCount - 1);
         }
-
-        adjMatrix = newMatrix; // Replace old matrix
+        adjMatrix = newMatrix;
     }
 
-    // Delete a vertex and shift matrix accordingly
-    public void deleteVertex(int vertex) {
-        if (vertex < 0 || vertex >= numVertices)
+    // Delete a vertex and shrink the matrix
+    public void deleteVertex(int v) {
+        if (v >= vertexCount)
             return;
-        int[][] newMatrix = new int[numVertices - 1][numVertices - 1];
-
-        for (int i = 0, ni = 0; i < numVertices; i++) {
-            if (i == vertex)
-                continue;
-            for (int j = 0, nj = 0; j < numVertices; j++) {
-                if (j == vertex)
+        int[][] newMatrix = new int[vertexCount - 1][vertexCount - 1];
+        for (int i = 0, ni = 0; i < vertexCount; i++) {
+            if (i == v)
+                continue; // Skip the vertex to delete
+            for (int j = 0, nj = 0; j < vertexCount; j++) {
+                if (j == v)
                     continue;
                 newMatrix[ni][nj++] = adjMatrix[i][j];
             }
             ni++;
         }
-        numVertices--;
+        vertexCount--;
         adjMatrix = newMatrix;
     }
 
-    // Add an edge between two vertices
-    public abstract void addEdge(int start, int end);
+    // Print the full adjacency matrix
+    public void printMatrix() {
+        System.out.println("Adjacency Matrix:");
+        for (int[] row : adjMatrix) {
+            for (int val : row) {
+                System.out.print(val + " ");
+            }
+            System.out.println();
+        }
+    }
 
-    // Delete an edge between two vertices
-    public abstract void deleteEdge(int start, int end);
-
-    // Print edge list of the graph
-    public void printEdges() {
-        for (int i = 0; i < numVertices; i++) {
-            for (int j = 0; j < numVertices; j++) {
-                if (adjMatrix[i][j] != 0) {
-                    System.out.println("Edge: (" + i + ", " + j + ")");
+    // Print all edges from the adjacency matrix
+    public void printEdgeList() {
+        System.out.println("Edge List:");
+        for (int i = 0; i < vertexCount; i++) {
+            for (int j = (this instanceof UndirectedGraph ? i : 0); j < vertexCount; j++) {
+                for (int k = 0; k < adjMatrix[i][j]; k++) {
+                    System.out.println(i + " - " + j);
                 }
             }
         }
     }
 
-    // Compute and print degree of each vertex
-    public void computeDegree() {
-        for (int i = 0; i < numVertices; i++) {
-            int degree = 0;
-            for (int j = 0; j < numVertices; j++) {
-                degree += adjMatrix[i][j];
-            }
-            System.out.println("Vertex [" + i + "], Degree = " + degree);
+    // Deep copy of the matrix (useful for future algorithms like Euler cycle)
+    public int[][] copy() {
+        int[][] copy = new int[vertexCount][vertexCount];
+        for (int i = 0; i < vertexCount; i++) {
+            System.arraycopy(adjMatrix[i], 0, copy[i], 0, vertexCount);
         }
+        return copy;
     }
 
-    // Compute the number of edges or arcs in the graph
-    public int countEdges() {
-        int count = 0;
-        for (int i = 0; i < numVertices; i++) {
-            for (int j = 0; j < numVertices; j++) {
-                count += adjMatrix[i][j];
-            }
+    // Abstract methods for degree and edge counting
+    public abstract int degree(int v);
+
+    public abstract void degree();
+
+    public abstract int countEdges();
+
+    // Check if the graph contains loops
+    public boolean hasLoop() {
+        for (int i = 0; i < vertexCount; i++) {
+            if (adjMatrix[i][i] > 0)
+                return true;
         }
-        return count / 2; // Divided by 2 for undirected graph
+        return false;
     }
 
-    public void printGraph() {
-        for (int[] row : adjMatrix) {
-            System.out.println(Arrays.toString(row));
+    // Check if it's a simple graph (no loops, no multiple edges)
+    public boolean isSimpleGraph() {
+        for (int i = 0; i < vertexCount; i++) {
+            for (int j = 0; j < vertexCount; j++) {
+                if (i == j && adjMatrix[i][j] > 0)
+                    return false;
+                if (adjMatrix[i][j] > 1)
+                    return false;
+            }
         }
+        return true;
+    }
+
+    // Check if the graph is complete (every pair of vertices is connected)
+    public boolean isCompleteGraph() {
+        for (int i = 0; i < vertexCount; i++) {
+            for (int j = 0; j < vertexCount; j++) {
+                if (i != j && adjMatrix[i][j] == 0)
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    // Check if the graph is bipartite using BFS coloring
+    public boolean isBipartite() {
+        int[] colors = new int[vertexCount];
+        Arrays.fill(colors, -1);
+        Queue<Integer> q = new LinkedList<>();
+
+        for (int start = 0; start < vertexCount; start++) {
+            if (colors[start] == -1) {
+                q.add(start);
+                colors[start] = 0;
+
+                while (!q.isEmpty()) {
+                    int u = q.poll();
+                    for (int v = 0; v < vertexCount; v++) {
+                        if (adjMatrix[u][v] > 0) {
+                            if (colors[v] == -1) {
+                                colors[v] = 1 - colors[u];
+                                q.add(v);
+                            } else if (colors[v] == colors[u]) {
+                                return false; // Same color found, not bipartite
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return true;
     }
 }

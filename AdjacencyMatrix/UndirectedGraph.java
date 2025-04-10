@@ -43,4 +43,23 @@ public class UndirectedGraph extends Graph {
         }
         return count == numVertices;
     }
+
+    public boolean isEuler() {
+        // If not connected, it's not Eulerian
+        if (!isConnected()) {
+            return false;
+        }
+
+        // Check if all degrees are even
+        for (int i = 0; i < numVertices; i++) {
+            int degree = 0;
+            for (int j = 0; j < numVertices; j++) {
+                degree += adjMatrix[i][j];
+            }
+            if (degree % 2 != 0) {
+                return false; // Odd degree found
+            }
+        }
+        return true; // All even degrees and connected
+    }
 }

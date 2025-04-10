@@ -70,4 +70,19 @@ public class DirectedGraph extends Graph {
         UndirectedGraph convertedGraph = undirectConvert();
         return convertedGraph.isConnected();
     }
+
+    public boolean isEuler() {
+        // Check weak connectivity
+        if (!isWeaklyConnected()) {
+            return false;
+        }
+
+        // For Eulerian directed graph: in-degree == out-degree for every vertex
+        for (int i = 0; i < numVertices; i++) {
+            if (halfIn(i) != halfOut(i)) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
