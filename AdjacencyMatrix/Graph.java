@@ -88,4 +88,40 @@ public abstract class Graph {
             System.out.println(Arrays.toString(row));
         }
     }
+
+    // Method to check if the graph is a tree or not
+    public boolean isTree() {
+        // A tree should have exactly n-1 edges and should be connected
+        int edgeCount = 0;
+        for (int i = 0; i < numVertices; i++) {
+            for (int j = i + 1; j < numVertices; j++) {
+                if (adjMatrix[i][j] != 0) {
+                    edgeCount++;
+                }
+            }
+        }
+        // Tree conditions: connected and exactly n-1 edges
+        return edgeCount == numVertices - 1 && isConnected();
+    }
+
+    // Method to check if the graph is connected
+    public boolean isConnected() {
+        boolean[] visited = new boolean[numVertices];
+        dfs(0, visited);
+        for (boolean v : visited) {
+            if (!v)
+                return false;
+        }
+        return true;
+    }
+
+    // DFS to visit all vertices
+    private void dfs(int vertex, boolean[] visited) {
+        visited[vertex] = true;
+        for (int i = 0; i < numVertices; i++) {
+            if (adjMatrix[vertex][i] != 0 && !visited[i]) {
+                dfs(i, visited);
+            }
+        }
+    }
 }
